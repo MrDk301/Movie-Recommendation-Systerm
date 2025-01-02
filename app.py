@@ -43,6 +43,7 @@ similarity = pickle.load(open('similarity.pkl', 'rb'))
 
 # Streamlit UI components
 st.title('Movies Recommendation System')
+st.markdown('''*:blue[Created by]* **:red[Deep Kansagara]**''')
 
 # Movie selection dropdown
 selected_movie_name = st.selectbox(
