@@ -11,11 +11,12 @@ def fetch_poster(movie_id):
 def recommend(movie):
     movie_index = movies[movies['title'] == movie].index[0]
     distances=similarity[movie_index]
-    movies_list=sorted(list(enumerate(distances)),reverse=True,key=lambda x:x[1])
+    movies_list=sorted(list(enumerate(distances)),reverse=True,key=lambda x:x[1])[1:6]
+
     recommended_movies = []
     recommended_movies_posters = []
 
-    for i in movies_list[1:11]:
+    for i in movies_list:
         movie_id = movies.iloc[i[0]].movie_id
         recommended_movies.append(movies.iloc[i[0]].title)
         recommended_movies_posters.append(fetch_poster(movie_id))
@@ -36,26 +37,17 @@ selected_movie_name = st.selectbox(
 
 if st.button('Recommend'):
     if selected_movie_name:
-        names, posters = recommend(selected_movie_name)
+        names = recommend(selected_movie_name)
         # Ensure names and posters are returned as a list with at least 5 items
-        names = names[:10]
-        posters = posters[:10]
+        names,posters = names[:5]
+        posters = posters[:5]
         
-        # Create top row of 5 columns
-        top_cols = st.columns(5)
-        for i in range(5):
-            if i < len(names):
-                with top_cols[i]:
-                    st.text(names[i])
-                    st.image(posters[i])
-        
-        # Create bottom row of 5 columns
-        bottom_cols = st.columns(5)
-        for i in range(5, len(names)):
-            if i < len(names):
-                with bottom_cols[i - 5]:
-                    st.text(names[i])
-                    st.image(posters[i])
+        # Displaying movie recommendations in 5 columns
+        cols = st.columns(5)
+        for i in range(len(names)):
+            with cols[i]:
+                st.text(names[i])
+                st.image(posters[i])
                 
     else:
         st.write("Please select a movie")
