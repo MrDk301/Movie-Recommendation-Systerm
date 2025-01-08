@@ -53,20 +53,63 @@ selected_movie_name = st.selectbox(
     help="Select a movie to get recommendations based on it",
 )
 
-# Recommend button functionality
+# Fetch movie details and trailer using TMDB API
+def fetch_movie_details_and_trailer(movie_id):
+    try:
+        # Fetch movie details
+        details_response = requests.get(f'https://api.themoviedb.org/3/movie/{movie_id}?api_key=376527df971bb65acc40692ba43ac544&language=en-US')
+        details_data = details_response.json()
+
+        # Fetch movie trailer
+        trailer_response = requests.get(f'https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key=376527df971bb65acc40692ba43ac544&language=en-US')
+        trailer_data = trailer_response.json()
+
+        # Extract trailer key from response
+        trailer_key = None
+        for video in trailer_data.get('results', []):
+            if video['type'] == 'Trailer' and video['site'] == 'YouTube':
+                trailer_key = video['key']
+                break
+
+        # Construct YouTube trailer URL
+        trailer_url = f"https://www.youtube.com/watch?v={trailer_key}" if trailer_key else None
+
+        return details_data, trailer_url
+    except Exception as e:
+        return None, None
+
+# Update the Streamlit app to show movie details and trailers
 if st.button('Recommend'):
     if selected_movie_name:
         with st.spinner('Fetching recommendations...'):
             names, posters = recommend(selected_movie_name)
-            
+
             # Ensure only 5 recommendations are displayed
             names, posters = names[:5], posters[:5]
-
-            # Display movie recommendations in columns
+            
             cols = st.columns(len(names))
             for i in range(len(names)):
                 with cols[i]:
                     st.text(names[i])
                     st.image(posters[i])
+
+                    # Add a button to view details and trailer
+                    if st.button(f"Details & Trailer: {names[i]}"):
+                        # Fetch and display movie details and trailer
+                        movie_id = movies[movies['title'] == names[i]].iloc[0].movie_id
+                        details, trailer_url = fetch_movie_details_and_trailer(movie_id)
+
+                        if details:
+                            st.subheader(details['title'])
+                            st.write(f"**Overview:** {details['overview']}")
+                            st.write(f"**Release Date:** {details['release_date']}")
+                            st.write(f"**Genres:** {', '.join([genre['name'] for genre in details['genres']])}")
+
+                            if trailer_url:
+                                st.video(trailer_url)
+                            else:
+                                st.write("Trailer not available.")
+                        else:
+                            st.write("Failed to fetch movie details.")
     else:
         st.write("Please select a movie.")
